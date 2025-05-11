@@ -1,0 +1,35 @@
+﻿
+CREATE TABLE [dbo].[Course]
+(
+	CourseId INT NOT NULL PRIMARY KEY IDENTITY,
+	CourseName VARCHAR(50) NOT NULL,
+)
+GO
+CREATE TABLE [dbo].[Student]
+(
+	StudentId INT NOT NULL PRIMARY KEY Identity(100,1),
+	StudentName VARCHAR(50) NOT NULL,
+	AdmissionDate datetime NOT NULL,
+	MobileNo VARCHAR(11) NOT NULL,
+	IsEnrolled bit NOT NULL,
+	CourseId int not null REFERENCES Course(CourseId) ON DELETE CASCADE,
+	ImageUrl VARCHAR(100) NULL
+)
+GO
+CREATE TABLE [dbo].[CourseModule]
+(
+	[CourseModuleId] INT NOT NULL PRIMARY KEY IDENTITY,
+	StudentId int not null REFERENCES Student(StudentId),
+	ModuleName varchar(25) not null,	
+	Duration int not null,
+)
+PM> Install-Package Microsoft.jQuery.Unobtrusive.Validation
+PM> Install-Package jQuery.Validation
+
+ 
+
+
+		
+
+		 
+        

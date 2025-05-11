@@ -1,0 +1,63 @@
+﻿@model PagedList.IPagedList<MVCMasterDetails.Models.Student>
+@using PagedList.Mvc;
+<link href="~/Content/PagedList.css" rel="stylesheet" />
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Student List</h2>
+
+<div>
+    <a href="@Url.Action("Create","Students")" id="btnCreate" class="btn btn-success float-end mb-2">Add New Student</a>
+</div>
+@using (Html.BeginForm("Index", "Students", FormMethod.Get))
+{
+    <p>
+        Find By Name: @Html.TextBox("searchString", ViewBag.currentFilter as string) &nbsp;
+        <input type="submit" value="Search" class="btn btn-warning" />
+    </p>
+}
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>@Html.ActionLink("Student Name", "Index", new { sortOrder = ViewBag.NameSortParam, currentFilter = ViewBag.currentFilter })</th>
+            <th>@Html.ActionLink("Admission Date", "Index", new { sortOrder = ViewBag.DateSortParam, currentFilter = ViewBag.currentFilter })</th>
+            <th>Mobile No</th>
+            <th>Course</th>
+            <th>Enrolled?</th>
+            <th>Modules</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td><img src=@Url.Content("~/images/"+s.ImageUrl) height="100"></td>
+                <td>@s.StudentName</td>
+                <td>@s.AdmissionDate.ToString("yyyy-MM-dd")</td>
+                <td>@s.MobileNo</td>
+                <td>@s.Course.CourseName</td>
+                <td>@(s.IsEnrolled? "Enrolled": "Not Enrolled")</td>
+                <td>
+                    <ul>
+                        @foreach (var m in s.CourseModules)
+                        {
+                            <li>@m.ModuleName : @m.Duration</li>
+                        }
+                    </ul>
+                </td>
+                <td>
+                    <a class="btn btn-primary btn-sm" href="@Url.Action("Edit", "Students", new {id=s.StudentId})">Edit</a>
+                    <a class="btn btn-danger btn-sm" href="@Url.Action("Delete", "Students", new {id=s.StudentId})" onclick="return confirm('Are you sure you want to delete @s.StudentName')">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<br />
+Page @(Model.PageCount<Model.PageNumber?0:Model.PageNumber)of @Model.PageCount
+
+@Html.PagedListPager(Model, page => Url.Action("Index", new {page,sortorder= ViewBag.currentSort, currentFilter= ViewBag.currentFilter }))

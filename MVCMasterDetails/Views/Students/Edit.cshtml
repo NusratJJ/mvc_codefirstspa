@@ -1,0 +1,119 @@
+﻿@model MVCMasterDetails.ViewModels.StudentViewModel
+@{
+    ViewBag.Title = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";}
+
+<div class="row mt-4">
+    <form id="editForm" action="Edit" enctype="multipart/form-data">
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <input type="hidden" name="StudentId" value="@Model.StudentId" />
+        <input type="hidden" name="OldImageUrl" value="@Model.ImageUrl" />
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Edit Student</h2>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.StudentName, htmlAttributes: new { @class = "control-label col-md-3" })
+                    @Html.EditorFor(model => model.StudentName, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.StudentName, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.AdmissionDate, htmlAttributes: new { @class = "control-label col-md-3" })
+                    @Html.EditorFor(model => model.AdmissionDate, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.AdmissionDate, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.MobileNo, htmlAttributes: new { @class = "control-label col-md-3" })
+                    @Html.EditorFor(model => model.MobileNo, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.MobileNo, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.IsEnrolled, htmlAttributes: new { @class = "control-label col-md-3" })
+                    @Html.EditorFor(model => model.IsEnrolled)
+                    @Html.ValidationMessageFor(model => model.IsEnrolled, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.CourseId, htmlAttributes: new { @class = "control-label col-md-3" })
+                    @Html.DropDownListFor(model => model.CourseId, new SelectList(Model.Courses, "CourseId", "CourseName"), "Select Course", new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.CourseId, "", new { @class = "text-danger" })
+                </div>               
+            <div class="form-group mb-2">
+                <img id="imageFile" src="~/Images/@Model.ImageUrl" width="125" height="125" style="border:1px;margin-top:20px;" /><br />
+                @Html.LabelFor(model => model.ProfileFile, htmlAttributes: new { @class = "control-label col-md-3" })
+                <input onchange="readUrl(this)" type="file" name="ProfileFile" id="ProfileFile" class="invisible" />
+            </div></div>
+            <div class="col-md-6">
+                <h2>Edit Module</h2>
+                <button onclick="AddModule()" type="button" class="btn btn-warning mb-2">Add Module</button>
+                @Html.Partial("_AddModules", Model.CourseModules)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-end">
+                <a href="@Url.Action("Index","Students")" class="btn btn-primary">Back To List</a>
+                <input type="submit" value="Create Student" class="btn btn-success" />
+            </div>
+        </div>
+    </form>
+</div>
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
+<script>
+    function readUrl(i) {
+        if (i.files && i.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#imageFile").attr('src', e.target.result)
+            }
+            reader.readAsDataURL(i.files[0]);
+        }
+    }
+    function deleteRow(btn) {
+        $(btn).closest('tr').remove();
+        updateCourseModuleIndex();
+    }
+    function AddModule() {
+        var lastIndex = parseInt($('#HIndex').val());
+        var newRow = `<tr> <td>
+        <input type="text" name="CourseModules[${lastIndex}].ModuleName" value="" class="form-control" /></td><td>
+         <input type="text" name="CourseModules[${lastIndex}].Duration" value="" class="form-control" /></td><td>
+           <button type="button" class="btn btn-danger" onclick="deleteRow(this)">Delete</button>
+         </td></tr>  `;
+        $("#ExTable tbody").append(newRow);
+        $('#HIndex').val(lastIndex + 1);
+        updateCourseModuleIndex();
+    }
+    function updateCourseModuleIndex() {
+        $("#ExTable tbody tr").each(function (index) {
+            $(this).find("input[name^='CourseModules']").each(function () {
+                var name = $(this).attr("name");
+                name = name.replace(/CourseModules\[\d+\]/, "CourseModules[" + index + "]");
+                $(this).attr("name", name)
+            })
+        })
+    }
+    $("#editForm").submit(function (event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+        $.ajax({
+                type: "POST",
+                url: "/Students/Edit",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        alert("Created Successfully");
+                        window.location.href = "/Students/Index";
+                    } else {
+                        alert("Validation Failed");
+                        console.log(response.errors);                        
+                    }
+                },
+                error: function (error) {
+                    alert("Error");
+                    console.error("Ajax Error", error);
+                }
+            }
+        )
+    })
+</script>
+

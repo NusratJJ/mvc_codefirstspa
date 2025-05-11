@@ -1,0 +1,140 @@
+﻿@model IEnumerable<MVCMasterDetails.Models.Student>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Student List</h2>
+<div id="student-app">
+    <div>
+        <button id="btnCreate" class="btn btn-success float-end mb-2">Add New Student</button>
+    </div>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Student Name</th>
+                <th>Admission Date</th>
+                <th>Mobile No</th>
+                <th>Course</th>
+                <th>Enrolled?</th>
+                <th>Modules</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="student-list-body">
+            @foreach (var s in Model)
+            {
+                <tr data-student-id="@s.StudentId">
+                    <td><img src="@Url.Content("~/images/"+s.ImageUrl)" height="100"></td>
+                    <td>@s.StudentName</td>
+                    <td>@s.AdmissionDate.ToString("yyyy-MM-dd")</td>
+                    <td>@s.MobileNo</td>
+                    <td>@s.Course.CourseName</td>
+                    <td>@(s.IsEnrolled? "Enrolled": "Not Enrolled")</td>
+                    <td>
+                        <ul>
+                            @foreach (var m in s.CourseModules)
+                            {
+                                <li>@m.ModuleName : @m.Duration</li>
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <a class="btn btn-primary btn-sm edit-btn" href="@Url.Action("EditPartial", "Student", new {id=s.StudentId})">Edit</a>
+                      
+                        <button class="btn btn-danger btn-sm delete-btn" data-student-id="@s.StudentId" data-student-name="@s.StudentName">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="modalContainer">
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#btnCreate").click(function () {
+                $.get('@Url.Action("CreatePartial", "Student")', function (data) {
+                    $("#modalContainer").html('<div class="modal fade show" style="display:block;" aria-modal="true" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content">' + data + '</div></div></div><div class="modal-backdrop fade show"></div>');
+                    attachModalEventListeners();
+                });
+            });        
+            $('#student-list-body').on('click', '.edit-btn', function (e) {
+                e.preventDefault(); // Prevent the default link behavior
+                var editUrl = $(this).attr('href'); // Get the URL from the href
+
+                $.get(editUrl, function (data) {
+                    $("#modalContainer").html('<div class="modal fade show" style="display:block;" aria-modal="true" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content">' + data + '</div></div></div><div class="modal-backdrop fade show"></div>');
+                    attachModalEventListeners("Edit", $(e.currentTarget).closest('tr').data('student-id')); // Pass action and studentId
+                });
+            });
+
+
+            $('#student-list-body').on('click', '.delete-btn', function () {
+                var studentId = $(this).data('student-id');
+                var studentName = $(this).data('student-name');
+                if (confirm('Are you sure you want to delete ' + studentName + '?')) {
+                    $.post('@Url.Action("DeleteStudent", "Student")', { id: studentId })
+                        .done(function (response) {
+                            if (response.success) {
+                                window.location.reload();
+                            } else {
+                                alert('Error deleting student: ' + response.message);
+                            }
+                        })
+                        .fail(function () {
+                            alert('An error occurred while deleting the student.');
+                        });
+                }
+            });
+
+            function attachModalEventListeners(action = "Create", studentId = null) {
+                $(document).off("click", ".modal-backdrop, .modal .btn-secondary").on("click", ".modal-backdrop, .modal .btn-secondary", function () {
+                    $("#modalContainer").empty();
+                });
+
+                $(document).off("submit", "#createStudentForm, #editStudentForm").on("submit", "#createStudentForm, #editStudentForm", function (e) {
+                    e.preventDefault();
+                    var form = $(this);
+                    var formData = new FormData(this);
+                    var url = '';
+
+                    if (form.attr('id') === "createStudentForm" && action === "Create") {
+                        url = '@Url.Action("CreateStudent", "Student")';
+                    } else if (form.attr('id') === "editStudentForm" && action === "Edit") {
+                        url = '@Url.Action("EditStudent", "Student")';
+                        if (studentId) {
+                            formData.append("StudentId", studentId);
+                        }
+                    }
+
+                    if (url) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: formData,
+                            contentType: false,
+                            processData: false,
+                            success: function (response) {
+                                if (response.success) {
+                                    $("#modalContainer").empty();
+                                    window.location.reload();
+                                } else {
+                                    $("#modalContainer .modal-content").html(response);
+                                    attachModalEventListeners(action, studentId);
+                                }
+                            },
+                            error: function () {
+                                alert("Error performing operation.");
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+}
